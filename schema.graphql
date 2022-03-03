@@ -1,0 +1,19 @@
+type LoansAction @entity {
+
+  id: ID! #id is a required field
+
+  blockHeight: Int @index
+
+  account: String @index
+
+  method: String
+
+  asset: String
+
+  assetId: Int
+
+  value: String
+
+  timestamp: Date
+
+}

@@ -1,0 +1,20 @@
+specVersion: 0.2.0
+name: parallel-lending-subql
+version: 1.0.0
+description: ''
+repository: ''
+schema:
+  file: ./schema.graphql
+network:
+  endpoint: wss://regnet-rpc.parallel.fi
+  genesisHash: '0xc26cd1cc96b5937b5451699b536182aac49dcf2c3b152b0fd55bbaa017640469'
+dataSources:
+  - kind: substrate/Runtime
+    startBlock: 900
+    mapping:
+      file: ./dist/index.js
+      handlers:
+        - handler: handleEvent
+          kind: substrate/EventHandler
+          filter:
+            module: loans
