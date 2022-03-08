@@ -24,12 +24,18 @@ type LendingPosition @entity {
   address: String
 
   assetId: Int
+
+  borrowIndex: String
  
   supplyBalance: String
 
   borrowBalance: String
 
   exchangeRate: String
+
+  totalEarnedPrior: Int
+
+  exchangeRatePrior: String
 
   timestamp: Date
 }

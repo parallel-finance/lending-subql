@@ -19,13 +19,12 @@
   "author": "Bruce",
   "license": "MIT",
   "dependencies": {
-    "@parallel-finance/api": "^1.5.2",
-    "@polkadot/api": "7.10.1"
+    "bignumber.js": "^9.0.2"
   },
   "devDependencies": {
     "@polkadot/api": "^7",
+    "@subql/cli": "latest",
     "@subql/types": "latest",
-    "typescript": "^4.1.3",
-    "@subql/cli": "latest"
+    "typescript": "^4.1.3"
   }
 }

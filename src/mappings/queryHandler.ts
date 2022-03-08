@@ -1,8 +1,8 @@
 
 /// assets.account  => address, assetId -> balance
 /// assets.asset => assetId -> supply(100->223642594977875000)
-
-import { AssetConfigure, LastAccuredTimestamp, LendingConfigure } from "../types"
+import { BigNumber } from "bignumber.js"
+import { AssetConfigure, LastAccuredTimestamp, LendingConfigure, LendingPosition } from "../types"
 
 const LQ = api.query.loans
 
@@ -14,8 +14,8 @@ const LQ = api.query.loans
     }
 */
 
-async function getAccountBorrows(assetId: number, address: string) {
-    return (await LQ.accountBorrows(assetId, address)).toJSON()
+async function getAccountBorrows(assetId: number, address) {
+    return (await api.query.loans.accountBorrows(assetId, address)).toJSON()
 }
 
 
@@ -145,8 +145,47 @@ async function getUtilizationRatio(assetId: number) {
     return bigIntStr((await LQ.utilizationRatio(assetId)).toString())
 }
 
-export async function handlePosition(assetId: number, address: string) {
+export async function handlePosition(assetId: number, address: string, blockHeight: number, hash: string, timestamp: Date) {
+    const re: any = await Promise.all([
+        getAccountBorrows(assetId, address),
+        getBorrowIndex(assetId),
+        getAccountDeposits(assetId, address),
+        getAccountEarned(assetId, address),
+        getExchangeRate(assetId)
+    ])
+    const [
+        borrows,
+        borrowIndex,
+        supplys,
+        totalEarned,
+        exchangeRate
+    ] = re
 
+    let borrowBalance = '0'
+    const isZero = borrows.principal != 0
+    if (isZero) {
+        borrowBalance = new BigNumber(borrowIndex)
+            .dividedBy(new BigNumber(borrows.borrowIndex))
+            .multipliedBy(new BigNumber(borrows.principal))
+            .integerValue().toString()
+        logger.warn(`borrows princal not zero: get borrow balance: ${borrowBalance}`)
+    }
+
+    let supplyBalance = supplys.voucherBalance.toString()
+
+    LendingPosition.create({
+        id: `${hash}`,
+        blockHeight,
+        assetId,
+        address,
+        borrowIndex,
+        borrowBalance,
+        supplyBalance,
+        totalEarnedPrior: totalEarned.totalEarnedPrior,
+        exchangeRatePrior: bigIntStr(totalEarned.exchangeRatePrior),
+        exchangeRate,
+        timestamp
+    }).save()
 }
 
 export async function handleAssetConfig(blockHeight: number) {
@@ -188,15 +227,6 @@ export async function handleAssetConfig(blockHeight: number) {
     })
 }
 
-export async function handleAccountLoans(assetId: number, address: string) {
-    const re = await Promise.all([
-        getAccountBorrows(assetId, address),
-        getAccountDeposits(assetId, address),
-        getAccountEarned(assetId, address)
-    ])
-    logger.info(`account loans info: %o`, re)
-}
-
 async function assetIdList(): Promise<number[]> {
     const re = await LQ.markets.keys()
     return re.map(k => {
@@ -210,7 +240,6 @@ async function assetIdList(): Promise<number[]> {
 
 export async function handleLastAccuredTimestap(blockHeight: number) {
     const lastAccruedTimestamp = await getLastAccuredTimestamp()
-    logger.warn(`last accured timestamp: %o`, lastAccruedTimestamp)
     LastAccuredTimestamp.create({
         id: `${blockHeight}`,
         blockHeight,
@@ -218,7 +247,7 @@ export async function handleLastAccuredTimestap(blockHeight: number) {
     }).save()
 }
 
-export async function handleMarketConfig(blockHeight: number, timestamp) {
+export async function handleMarketConfig(blockHeight: number, timestamp: Date) {
     const ids = await assetIdList()
     ids.map(async assetId => {
         const re: any = await getLendingMarket(assetId)
@@ -229,7 +258,6 @@ export async function handleMarketConfig(blockHeight: number, timestamp) {
             liquidateIncentive,
             cap
         } = re
-        logger.info(`market data: %o`, re)
         LendingConfigure.create({
             id: `${blockHeight}-${assetId}`,
             blockHeight,
