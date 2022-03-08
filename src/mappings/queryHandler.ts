@@ -109,7 +109,7 @@ async function getAssetSupply(assetId: number) {
     return bigIntStr(supply)
 }
 
-async function getExchangeRate(assetId: number): Promise<string> {
+export async function getExchangeRate(assetId: number): Promise<string> {
     return bigIntStr((await api.query.loans.exchangeRate(assetId)).toString())
 }
 

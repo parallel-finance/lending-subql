@@ -1,6 +1,6 @@
 import { SubstrateBlock, SubstrateEvent } from "@subql/types";
 import { LendingAction } from "../types";
-import { handleLastAccuredTimestap, handleAssetConfig, handleMarketConfig, handlePosition } from './queryHandler'
+import { handleLastAccuredTimestap, handleAssetConfig, handleMarketConfig, handlePosition, getExchangeRate } from './queryHandler'
 
 const BALANCE_CARE_EVNETS = [
     'Deposited',
@@ -27,6 +27,8 @@ export async function handleEvent(event: SubstrateEvent): Promise<void> {
 
         if (BALANCE_CARE_EVNETS.includes(method)) {
             logger.info(`handle [${method}] action hash: ${hash.toString()}`)
+
+            const exchangeRate = await getExchangeRate(assetIdInt)
             await LendingAction.create({
                 id: hash.toString(),
                 blockHeight: ext.block.block.header.number.toNumber(),
@@ -34,6 +36,7 @@ export async function handleEvent(event: SubstrateEvent): Promise<void> {
                 method,
                 assetId: assetIdInt,
                 value: value && value.toString(),
+                exchangeRate,
                 timestamp: ext.block.timestamp
             }).save()
 
@@ -55,7 +58,7 @@ export async function handleBlock(block: SubstrateBlock): Promise<void> {
     await handleLastAccuredTimestap(blockNumber)
 
     await handleMarketConfig(blockNumber, timestamp)
-    
+
     // block.block.extrinsics.map(async ext => {
     //     if (ext.isSigned) {
     //         const { meta, method: { args, method, section } } = ext;
