@@ -1,19 +1,89 @@
-type LoansAction @entity {
+type LendingAction @entity {
 
   id: ID! #id is a required field
 
   blockHeight: Int @index
 
-  account: String @index
+  address: String @index
 
   method: String
 
-  asset: String
-
-  assetId: Int
+  assetId: Int @index
 
   value: String
 
   timestamp: Date
 
+}
+
+type LendingPosition @entity {
+  id: ID!
+
+  blockHeight: Int @index
+
+  address: String
+
+  assetId: Int
+ 
+  supplyBalance: String
+
+  borrowBalance: String
+
+  exchangeRate: String
+
+  timestamp: Date
+}
+
+
+type LendingConfigure @entity {
+  id: ID!
+
+  blockHeight: Int @index
+
+  assetId: Int @index
+
+  collateralFactor: String
+
+  borrowCap: String
+
+  closeFactor: String
+
+  liquidationIncentive: String
+
+  reserveFactor: String
+
+  timestamp: Date
+}
+
+type AssetConfigure @entity {
+  id: ID!
+
+  assetId: Int @index
+
+  blockHeight: Int @index
+
+  totalSupply: String
+
+  totalBorrows: String
+
+  totalReserves: String
+
+  borrowIndex: String
+
+  borrowRate: String
+
+  supplyRate: String
+
+  exchangeRate: String
+
+  utilizationRatio: String
+
+}
+
+type LastAccuredTimestamp @entity {
+  id: ID!
+
+  blockHeight: Int @index
+
+  lastAccruedTimestamp: String
 }

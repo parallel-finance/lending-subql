@@ -18,6 +18,10 @@
   ],
   "author": "Bruce",
   "license": "MIT",
+  "dependencies": {
+    "@parallel-finance/api": "^1.5.2",
+    "@polkadot/api": "7.10.1"
+  },
   "devDependencies": {
     "@polkadot/api": "^7",
     "@subql/types": "latest",
