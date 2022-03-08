@@ -86,7 +86,7 @@ type AssetConfigure @entity {
 
 }
 
-type LastAccuredTimestamp @entity {
+type LastAccruedTimestamp @entity {
   id: ID!
 
   blockHeight: Int @index

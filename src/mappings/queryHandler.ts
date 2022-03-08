@@ -2,7 +2,7 @@
 /// assets.account  => address, assetId -> balance
 /// assets.asset => assetId -> supply(100->223642594977875000)
 import { BigNumber } from "bignumber.js"
-import { AssetConfigure, LastAccuredTimestamp, LendingConfigure, LendingPosition } from "../types"
+import { AssetConfigure, LastAccruedTimestamp, LendingConfigure, LendingPosition } from "../types"
 
 const LQ = api.query.loans
 
@@ -113,7 +113,7 @@ async function getExchangeRate(assetId: number): Promise<string> {
     return bigIntStr((await api.query.loans.exchangeRate(assetId)).toString())
 }
 
-async function getLastAccuredTimestamp(): Promise<string> {
+async function getLastAccruedTimestamp(): Promise<string> {
     return (await api.query.loans.lastAccruedTimestamp()).toString()
 }
 
@@ -171,7 +171,7 @@ export async function handlePosition(assetId: number, address: string, blockHeig
         logger.warn(`borrows princal not zero: get borrow balance: ${borrowBalance}`)
     }
 
-    let supplyBalance = supplys.voucherBalance.toString()
+    let supplyBalance = bigIntStr(supplys.voucherBalance.toString())
 
     LendingPosition.create({
         id: `${hash}`,
@@ -239,8 +239,8 @@ async function assetIdList(): Promise<number[]> {
 }
 
 export async function handleLastAccuredTimestap(blockHeight: number) {
-    const lastAccruedTimestamp = await getLastAccuredTimestamp()
-    LastAccuredTimestamp.create({
+    const lastAccruedTimestamp = await getLastAccruedTimestamp()
+    LastAccruedTimestamp.create({
         id: `${blockHeight}`,
         blockHeight,
         lastAccruedTimestamp
