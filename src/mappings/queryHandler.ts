@@ -249,7 +249,8 @@ export async function handleMarketConfig(blockHeight: number, timestamp: Date) {
             reserveFactor,
             closeFactor,
             liquidateIncentive,
-            cap
+            cap,
+            state
         } = re
         LendingMarketConfigure.create({
             id: `${blockHeight}-${assetId}`,
@@ -260,6 +261,7 @@ export async function handleMarketConfig(blockHeight: number, timestamp: Date) {
             closeFactor,
             liquidationIncentive: bigIntStr(liquidateIncentive),
             borrowCap: bigIntStr(cap),
+            marketStatus: state,
             timestamp
         }).save()
     })
