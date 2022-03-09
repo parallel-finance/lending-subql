@@ -43,7 +43,7 @@ type LendingPosition @entity {
 }
 
 
-type LendingConfigure @entity {
+type LendingMarketConfigure @entity {
   id: ID!
 
   blockHeight: Int @index
@@ -56,6 +56,8 @@ type LendingConfigure @entity {
 
   closeFactor: String
 
+  marketStatus: String
+
   liquidationIncentive: String
 
   reserveFactor: String
@@ -63,7 +65,7 @@ type LendingConfigure @entity {
   timestamp: Date
 }
 
-type AssetConfigure @entity {
+type LendingAssetConfigure @entity {
   id: ID!
 
   assetId: Int @index

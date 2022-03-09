@@ -2,7 +2,7 @@
 /// assets.account  => address, assetId -> balance
 /// assets.asset => assetId -> supply(100->223642594977875000)
 import { BigNumber } from "bignumber.js"
-import { AssetConfigure, LastAccruedTimestamp, LendingConfigure, LendingPosition } from "../types"
+import { LendingAssetConfigure, LastAccruedTimestamp, LendingMarketConfigure, LendingPosition } from "../types"
 
 const LQ = api.query.loans
 
@@ -211,7 +211,7 @@ export async function handleAssetConfig(blockHeight: number) {
             getSupplyRate(assetId),
             getUtilizationRatio(assetId)
         ])
-        const re = AssetConfigure.create({
+        const re = LendingAssetConfigure.create({
             id: `${blockHeight}-${assetId}`,
             assetId,
             blockHeight,
@@ -258,7 +258,7 @@ export async function handleMarketConfig(blockHeight: number, timestamp: Date) {
             liquidateIncentive,
             cap
         } = re
-        LendingConfigure.create({
+        LendingMarketConfigure.create({
             id: `${blockHeight}-${assetId}`,
             blockHeight,
             assetId,
