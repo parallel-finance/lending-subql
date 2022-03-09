@@ -88,12 +88,5 @@ type LendingAssetConfigure @entity {
 
   utilizationRatio: String
 
-}
-
-type LastAccruedTimestamp @entity {
-  id: ID!
-
-  blockHeight: Int @index
-
   lastAccruedTimestamp: String
 }

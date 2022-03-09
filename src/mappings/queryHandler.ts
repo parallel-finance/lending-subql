@@ -2,7 +2,7 @@
 /// assets.account  => address, assetId -> balance
 /// assets.asset => assetId -> supply(100->223642594977875000)
 import { BigNumber } from "bignumber.js"
-import { LendingAssetConfigure, LastAccruedTimestamp, LendingMarketConfigure, LendingPosition } from "../types"
+import { LendingAssetConfigure, LendingMarketConfigure, LendingPosition } from "../types"
 
 const LQ = api.query.loans
 
@@ -190,6 +190,7 @@ export async function handlePosition(assetId: number, address: string, blockHeig
 
 export async function handleAssetConfig(blockHeight: number) {
     const ids = await assetIdList()
+    const lastAccruedTimestamp = await getLastAccruedTimestamp()
     ids.map(async assetId => {
 
         const [
@@ -222,7 +223,8 @@ export async function handleAssetConfig(blockHeight: number) {
             borrowRate: borrowRate,
             supplyRate: supplyRate,
             borrowIndex: borrowIndex,
-            utilizationRatio: utilizationRatio
+            utilizationRatio: utilizationRatio,
+            lastAccruedTimestamp
         }).save()
     })
 }
@@ -236,15 +238,6 @@ async function assetIdList(): Promise<number[]> {
         }
         return Number(s)
     })
-}
-
-export async function handleLastAccuredTimestap(blockHeight: number) {
-    const lastAccruedTimestamp = await getLastAccruedTimestamp()
-    LastAccruedTimestamp.create({
-        id: `${blockHeight}`,
-        blockHeight,
-        lastAccruedTimestamp
-    }).save()
 }
 
 export async function handleMarketConfig(blockHeight: number, timestamp: Date) {
