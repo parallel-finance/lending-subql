@@ -16,6 +16,8 @@ type LendingAction @entity {
 
   borrowBalance: String
 
+  borrowIndex: String
+
   exchangeRate: String
 
   totalEarnedPrior: Int

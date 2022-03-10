@@ -29,7 +29,6 @@ export async function handleEvent(event: SubstrateEvent): Promise<void> {
             logger.info(`[${blockHeight}] handle [${method}] [${assetIdInt}] of ${addressStr} action hash: ${hash.toString()}`)
 
             const position = await handlePosition(assetIdInt, addressStr)
-            logger.debug(`get position: %o`, position)
 
             await LendingAction.create({
                 ...position,

@@ -8,6 +8,7 @@ const LQ = api.query.loans
 
 type PositionData = {
     borrowBalance: string,
+    borrowIndex: string
     supplyBalance: string,
     totalEarnedPrior: number,
     exchangeRatePrior: string,
@@ -168,7 +169,6 @@ export async function handlePosition(assetId: number, address: string): Promise<
         totalEarned,
         exchangeRate
     ] = re
-    // logger.info(`position raw: %o`, re)
     let borrowBalance = '0'
     const isZero = borrows.principal != 0
     if (isZero) {
@@ -183,11 +183,12 @@ export async function handlePosition(assetId: number, address: string): Promise<
     const result = {
         borrowBalance,
         supplyBalance,
+        borrowIndex,
         totalEarnedPrior: totalEarned.totalEarnedPrior,
         exchangeRatePrior: bigIntStr(totalEarned.exchangeRatePrior),
         exchangeRate
     }
-    logger.info(`position result: %o`, result)
+    logger.info(`position result: \nraw: %o\nparsed: %o`, re, result)
     return result
 }
 
