@@ -6,29 +6,12 @@ type LendingAction @entity {
 
   address: String @index
 
-  method: String
-
   assetId: Int @index
+
+  method: String
 
   value: String
 
-  exchangeRate: String
-
-  timestamp: Date
-
-}
-
-type LendingPosition @entity {
-  id: ID!
-
-  blockHeight: Int @index
-
-  address: String
-
-  assetId: Int
-
-  borrowIndex: String
- 
   supplyBalance: String
 
   borrowBalance: String
@@ -41,7 +24,6 @@ type LendingPosition @entity {
 
   timestamp: Date
 }
-
 
 type LendingMarketConfigure @entity {
   id: ID!

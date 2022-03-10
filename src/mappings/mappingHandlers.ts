@@ -20,27 +20,27 @@ export async function handleEvent(event: SubstrateEvent): Promise<void> {
     try {
         const ext = event.extrinsic
         const hash = ext.extrinsic.hash
-        const blockNumber = ext.block.block.header.number.toNumber()
+        const blockHeight = ext.block.block.header.number.toNumber()
         const timestamp = ext.block.timestamp
         const addressStr = address.toString()
         const assetIdInt = Number(assetId.toString())
 
         if (BALANCE_CARE_EVNETS.includes(method)) {
-            logger.info(`handle [${method}] action hash: ${hash.toString()}`)
+            logger.info(`[${blockHeight}] handle [${method}] [${assetIdInt}] of ${addressStr} action hash: ${hash.toString()}`)
 
-            const exchangeRate = await getExchangeRate(assetIdInt)
+            const position = await handlePosition(assetIdInt, addressStr)
+            logger.debug(`get position: %o`, position)
+
             await LendingAction.create({
+                ...position,
                 id: hash.toString(),
-                blockHeight: ext.block.block.header.number.toNumber(),
+                blockHeight,
                 address: addressStr,
                 method,
                 assetId: assetIdInt,
                 value: value && value.toString(),
-                exchangeRate,
-                timestamp: ext.block.timestamp
+                timestamp
             }).save()
-
-            await handlePosition(assetIdInt, addressStr, blockNumber, hash.toString(), timestamp)
         }
     } catch (e: any) {
         logger.error(`handle loans event error: %o`, e)

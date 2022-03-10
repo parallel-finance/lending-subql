@@ -2,9 +2,17 @@
 /// assets.account  => address, assetId -> balance
 /// assets.asset => assetId -> supply(100->223642594977875000)
 import { BigNumber } from "bignumber.js"
-import { LendingAssetConfigure, LendingMarketConfigure, LendingPosition } from "../types"
+import { LendingAssetConfigure, LendingMarketConfigure } from "../types"
 
 const LQ = api.query.loans
+
+type PositionData = {
+    borrowBalance: string,
+    supplyBalance: string,
+    totalEarnedPrior: number,
+    exchangeRatePrior: string,
+    exchangeRate: string
+}
 
 /// loans
 /// accountBorrows(assetId, address)
@@ -145,7 +153,7 @@ async function getUtilizationRatio(assetId: number) {
     return bigIntStr((await LQ.utilizationRatio(assetId)).toString())
 }
 
-export async function handlePosition(assetId: number, address: string, blockHeight: number, hash: string, timestamp: Date) {
+export async function handlePosition(assetId: number, address: string): Promise<PositionData> {
     const re: any = await Promise.all([
         getAccountBorrows(assetId, address),
         getBorrowIndex(assetId),
@@ -160,7 +168,7 @@ export async function handlePosition(assetId: number, address: string, blockHeig
         totalEarned,
         exchangeRate
     ] = re
-
+    // logger.info(`position raw: %o`, re)
     let borrowBalance = '0'
     const isZero = borrows.principal != 0
     if (isZero) {
@@ -172,20 +180,15 @@ export async function handlePosition(assetId: number, address: string, blockHeig
     }
 
     let supplyBalance = bigIntStr(supplys.voucherBalance.toString())
-
-    LendingPosition.create({
-        id: `${hash}`,
-        blockHeight,
-        assetId,
-        address,
-        borrowIndex,
+    const result = {
         borrowBalance,
         supplyBalance,
         totalEarnedPrior: totalEarned.totalEarnedPrior,
         exchangeRatePrior: bigIntStr(totalEarned.exchangeRatePrior),
-        exchangeRate,
-        timestamp
-    }).save()
+        exchangeRate
+    }
+    logger.info(`position result: %o`, result)
+    return result
 }
 
 export async function handleAssetConfig(blockHeight: number) {
