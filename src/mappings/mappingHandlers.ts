@@ -52,7 +52,7 @@ export async function handleBlock(block: SubstrateBlock): Promise<void> {
 
     const timestamp = block.timestamp
 
-    await handleAssetConfig(blockNumber)
+    await handleAssetConfig(blockNumber, timestamp)
 
     await handleMarketConfig(blockNumber, timestamp)
 

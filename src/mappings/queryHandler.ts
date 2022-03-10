@@ -192,7 +192,7 @@ export async function handlePosition(assetId: number, address: string): Promise<
     return result
 }
 
-export async function handleAssetConfig(blockHeight: number) {
+export async function handleAssetConfig(blockHeight: number, timestamp: Date) {
     const ids = await assetIdList()
     const lastAccruedTimestamp = await getLastAccruedTimestamp()
     ids.map(async assetId => {
@@ -228,7 +228,8 @@ export async function handleAssetConfig(blockHeight: number) {
             supplyRate: supplyRate,
             borrowIndex: borrowIndex,
             utilizationRatio: utilizationRatio,
-            lastAccruedTimestamp
+            lastAccruedTimestamp,
+            timestamp
         }).save()
     })
 }

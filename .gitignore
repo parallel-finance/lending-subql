@@ -55,4 +55,6 @@ Thumbs.db
 
 .data
 .github
+dump.rdb
+
 src/types

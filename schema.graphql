@@ -73,4 +73,6 @@ type LendingAssetConfigure @entity {
   utilizationRatio: String
 
   lastAccruedTimestamp: String
+
+  timestamp: Date
 }
