@@ -6,7 +6,7 @@ repository: ''
 schema:
   file: ./schema.graphql
 network:
-  endpoint: wss://heiko-rpc.parallel.fi
+  endpoint: wss://parallel-heiko.api.onfinality.io/public-ws
   genesisHash: '0x64a1c658a48b2e70a7fb1ad4c39eea35022568c20fc44a6e2e3d0a57aee6053b'
 dataSources:
   - kind: substrate/Runtime
