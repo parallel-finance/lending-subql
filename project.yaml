@@ -6,12 +6,11 @@ repository: ''
 schema:
   file: ./schema.graphql
 network:
-  endpoint: wss://regnet2-rpc.parallel.fi
-  genesisHash: '0x522a23dab7e2542bc3a177e206dda2cf81345e5ca7aaab2f72e9de1889c5ed95'
+  endpoint: wss://testnet-parachain-rpc-v2.parallel.fi
+  genesisHash: '0x7582065adbd7e169615fdff1dd56071073a39f2232fac6030561855c4f989723'
 dataSources:
   - kind: substrate/Runtime
-    # startBlock: 3900
-    startBlock: 4273
+    startBlock: 1
     mapping:
       file: ./dist/index.js
       handlers:
