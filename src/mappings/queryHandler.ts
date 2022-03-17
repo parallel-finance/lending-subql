@@ -235,14 +235,18 @@ export async function handleAssetConfig(blockHeight: number, timestamp: Date) {
 }
 
 async function assetIdList(): Promise<number[]> {
-    const re = await LQ.markets.keys()
-    return re.map(k => {
-        let s: string = k.toHuman()[0]
-        if (s.includes(',')) {
-            s = s.replace(',', '')
-        }
-        return Number(s)
-    })
+    try {
+        const re = await LQ.markets.keys()
+        return re.map(k => {
+            let s: string = k.toHuman()[0]
+            if (s.includes(',')) {
+                s = s.replace(',', '')
+            }
+            return Number(s)
+        })
+    } catch (e: any) {
+        logger.error(`get asset list error: %o`, e)
+    }
 }
 
 export async function handleMarketConfig(blockHeight: number, timestamp: Date) {

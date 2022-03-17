@@ -6,8 +6,8 @@ repository: ''
 schema:
   file: ./schema.graphql
 network:
-  endpoint: wss://testnet-parachain-rpc-v2.parallel.fi
-  genesisHash: '0x7582065adbd7e169615fdff1dd56071073a39f2232fac6030561855c4f989723'
+  endpoint: wss://regnet-rpc.parallel.fi
+  genesisHash: '0xc26cd1cc96b5937b5451699b536182aac49dcf2c3b152b0fd55bbaa017640469'
 dataSources:
   - kind: substrate/Runtime
     startBlock: 1

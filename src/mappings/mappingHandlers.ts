@@ -1,6 +1,6 @@
 import { SubstrateBlock, SubstrateEvent } from "@subql/types";
 import { LendingAction } from "../types";
-import { handleAssetConfig, handleMarketConfig, handlePosition, getExchangeRate } from './queryHandler'
+import { handleAssetConfig, handleMarketConfig, handlePosition } from './queryHandler'
 
 const BALANCE_CARE_EVNETS = [
     'Deposited',
@@ -9,11 +9,6 @@ const BALANCE_CARE_EVNETS = [
     'RepaidBorrow',
     'LiquidatedBorrow',
 ]
-
-/// TODO:
-// handle block
-// borrow_rate supply_rate
-// total_earned 
 
 export async function handleEvent(event: SubstrateEvent): Promise<void> {
     let { event: { data: [address, assetId, value], method } } = event;
@@ -55,12 +50,4 @@ export async function handleBlock(block: SubstrateBlock): Promise<void> {
     await handleAssetConfig(blockNumber, timestamp)
 
     await handleMarketConfig(blockNumber, timestamp)
-
-    // block.block.extrinsics.map(async ext => {
-    //     if (ext.isSigned) {
-    //         const { meta, method: { args, method, section } } = ext;
-    //         // explicit display of name, args & documentation
-    //         // logger.info(`${block.block.header.number} ${section}.${method}(${args.map((a) => a.toString()).join(', ')})`);
-    //     }
-    // })
 }
