@@ -123,7 +123,12 @@ export async function getExchangeRate(assetId: number): Promise<string> {
 }
 
 async function getLastAccruedTimestamp(): Promise<string> {
-    return (await api.query.loans.lastAccruedTimestamp()).toString()
+    try {
+        return (await api.query.loans.lastAccruedTimestamp()).toString()
+    } catch(e: any) {
+        logger.error(`get last accrued timestamp error: %o`, e)
+        return ''
+    }
 }
 
 async function getTotalSupply(assetId: number) {
@@ -235,14 +240,18 @@ export async function handleAssetConfig(blockHeight: number, timestamp: Date) {
 }
 
 async function assetIdList(): Promise<number[]> {
-    const re = await LQ.markets.keys()
-    return re.map(k => {
-        let s: string = k.toHuman()[0]
-        if (s.includes(',')) {
-            s = s.replace(',', '')
-        }
-        return Number(s)
-    })
+    try {
+        const re = await LQ.markets.keys()
+        return re.map(k => {
+            let s: string = k.toHuman()[0]
+            if (s.includes(',')) {
+                s = s.replace(',', '')
+            }
+            return Number(s)
+        })
+    } catch (e: any) {
+        logger.error(`get asset id list error: %o`, e)
+    }
 }
 
 export async function handleMarketConfig(blockHeight: number, timestamp: Date) {
