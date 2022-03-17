@@ -12,7 +12,7 @@ network:
   # genesisHash: '0x7582065adbd7e169615fdff1dd56071073a39f2232fac6030561855c4f989723'
 dataSources:
   - kind: substrate/Runtime
-    startBlock: 0
+    startBlock: 1
     mapping:
       file: ./dist/index.js
       handlers:
