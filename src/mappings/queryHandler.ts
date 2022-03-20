@@ -125,7 +125,7 @@ export async function getExchangeRate(assetId: number): Promise<string> {
 async function getLastAccruedTimestamp(): Promise<string> {
     try {
         return (await api.query.loans.lastAccruedTimestamp()).toString()
-    } catch(e: any) {
+    } catch (e: any) {
         logger.error(`get last accrued timestamp error: %o`, e)
         return ''
     }
@@ -197,11 +197,27 @@ export async function handlePosition(assetId: number, address: string): Promise<
     return result
 }
 
-export async function handleAssetConfig(blockHeight: number, timestamp: Date) {
-    const ids = await assetIdList()
+export async function handleAssetConfig(assetIdList: number[], blockHeight: number, timestamp: Date) {
+    if (assetIdList.length < 1) {
+        return
+    }
     const lastAccruedTimestamp = await getLastAccruedTimestamp()
-    ids.map(async assetId => {
-
+    let assetQueries = []
+    assetIdList.map(assetId => {
+        assetQueries.push(Promise.all([
+            getTotalSupply(assetId),
+            getTotalBorrows(assetId),
+            getTotalReserves(assetId),
+            getBorrowIndex(assetId),
+            getExchangeRate(assetId),
+            getBorrowRate(assetId),
+            getSupplyRate(assetId),
+            getUtilizationRatio(assetId)
+        ]))
+    })
+    const assetRes = await Promise.all(assetQueries)
+    for (let ind in assetRes) {
+        const assetId = assetIdList[ind]
         const [
             totalSupply,
             totalBorrows,
@@ -211,17 +227,8 @@ export async function handleAssetConfig(blockHeight: number, timestamp: Date) {
             borrowRate,
             supplyRate,
             utilizationRatio
-        ] = await Promise.all([
-            getTotalSupply(assetId),
-            getTotalBorrows(assetId),
-            getTotalReserves(assetId),
-            getBorrowIndex(assetId),
-            getExchangeRate(assetId),
-            getBorrowRate(assetId),
-            getSupplyRate(assetId),
-            getUtilizationRatio(assetId)
-        ])
-        const re = LendingAssetConfigure.create({
+        ] = assetRes[ind]
+        const record = LendingAssetConfigure.create({
             id: `${blockHeight}-${assetId}`,
             assetId,
             blockHeight,
@@ -235,14 +242,35 @@ export async function handleAssetConfig(blockHeight: number, timestamp: Date) {
             utilizationRatio: utilizationRatio,
             lastAccruedTimestamp,
             timestamp
-        }).save()
-    })
+        })
+        logger.debug(`create new asset config: %o`, record)
+        record.save()
+    }
+    // const [
+    //     totalSupply,
+    //     totalBorrows,
+    //     totalReserves,
+    //     borrowIndex,
+    //     exchangeRate,
+    //     borrowRate,
+    //     supplyRate,
+    //     utilizationRatio
+    // ] = await Promise.all([
+    //     getTotalSupply(assetId),
+    //     getTotalBorrows(assetId),
+    //     getTotalReserves(assetId),
+    //     getBorrowIndex(assetId),
+    //     getExchangeRate(assetId),
+    //     getBorrowRate(assetId),
+    //     getSupplyRate(assetId),
+    //     getUtilizationRatio(assetId)
+    // ])
 }
 
-async function assetIdList(): Promise<number[]> {
+export async function assetIdList(): Promise<number[]> {
     try {
-        const re = await LQ.markets.keys()
-        return re.map(k => {
+        const keys = await LQ.markets.keys()
+        return keys.map(k => {
             let s: string = k.toHuman()[0]
             if (s.includes(',')) {
                 s = s.replace(',', '')
@@ -254,29 +282,66 @@ async function assetIdList(): Promise<number[]> {
     }
 }
 
-export async function handleMarketConfig(blockHeight: number, timestamp: Date) {
-    const ids = await assetIdList()
-    ids.map(async assetId => {
-        const re: any = await getLendingMarket(assetId)
-        const {
-            collateralFactor,
-            reserveFactor,
-            closeFactor,
-            liquidateIncentive,
-            cap,
-            state
-        } = re
-        LendingMarketConfigure.create({
-            id: `${blockHeight}-${assetId}`,
-            blockHeight,
-            assetId,
-            collateralFactor,
-            reserveFactor,
-            closeFactor,
-            liquidationIncentive: bigIntStr(liquidateIncentive),
-            borrowCap: bigIntStr(cap),
-            marketStatus: state,
-            timestamp
-        }).save()
-    })
+export async function handleMarketConfig(assetIdList: number[], blockHeight: number, timestamp: Date) {
+    try {
+        let marketQueries = []
+        assetIdList.map(assetId => {
+            marketQueries.push(getLendingMarket(assetId))
+        })
+        const marketRes = await Promise.all(marketQueries)
+        for (let ind in marketRes) {
+            const {
+                collateralFactor,
+                reserveFactor,
+                closeFactor,
+                liquidateIncentive,
+                cap,
+                state
+            } = marketRes[ind]
+            const assetId = assetIdList[ind]
+
+            const record = LendingMarketConfigure.create({
+                id: `${blockHeight}-${assetId}`,
+                blockHeight,
+                assetId,
+                collateralFactor,
+                reserveFactor,
+                closeFactor,
+                liquidationIncentive: bigIntStr(liquidateIncentive),
+                borrowCap: bigIntStr(cap),
+                marketStatus: state,
+                timestamp
+            })
+            record.save()
+        }
+    } catch (e: any) {
+        logger.error(`handle market error: ${e.message}`)
+    }
+    // for (let assetId of assetIdList) {
+    //     const start = Date.now()
+    //     const re: any = await getLendingMarket(assetId)
+    //     const {
+    //         collateralFactor,
+    //         reserveFactor,
+    //         closeFactor,
+    //         liquidateIncentive,
+    //         cap,
+    //         state
+    //     } = re
+    //     logger.warn(`get market timeout: ${Date.now()-start}`)
+    //     const record = LendingMarketConfigure.create({
+    //         id: `${blockHeight}-${assetId}`,
+    //         blockHeight,
+    //         assetId,
+    //         collateralFactor,
+    //         reserveFactor,
+    //         closeFactor,
+    //         liquidationIncentive: bigIntStr(liquidateIncentive),
+    //         borrowCap: bigIntStr(cap),
+    //         marketStatus: state,
+    //         timestamp
+    //     })
+    //     logger.debug(`create new market config: %o`, record)
+    //     await record.save()
+    // }
 }

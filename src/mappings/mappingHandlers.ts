@@ -1,6 +1,6 @@
 import { SubstrateBlock, SubstrateEvent } from "@subql/types";
 import { LendingAction } from "../types";
-import { handleAssetConfig, handleMarketConfig, handlePosition, getExchangeRate } from './queryHandler'
+import { assetIdList, handleAssetConfig, handleMarketConfig, handlePosition } from './queryHandler'
 
 const BALANCE_CARE_EVNETS = [
     'Deposited',
@@ -44,10 +44,11 @@ export async function handleEvent(event: SubstrateEvent): Promise<void> {
 export async function handleBlock(block: SubstrateBlock): Promise<void> {
 
     const blockNumber = block.block.header.number.toNumber()
-
     const timestamp = block.timestamp
 
-    await handleAssetConfig(blockNumber, timestamp)
+    // if (blockNumber % 6 !== 0) { return }
+    const ids = await assetIdList()
 
-    await handleMarketConfig(blockNumber, timestamp)
+    handleAssetConfig(ids, blockNumber, timestamp)
+    handleMarketConfig(ids, blockNumber, timestamp)
 }
