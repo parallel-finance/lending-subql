@@ -214,53 +214,57 @@ export async function assetIdList(): Promise<number[]> {
 }
 
 export async function handleAssetConfig(assetIdList: number[], blockHeight: number, timestamp: Date) {
-    if (assetIdList.length < 1) {
-        return
-    }
-    const lastAccruedTimestamp = await getLastAccruedTimestamp()
-    let assetQueries = []
-    assetIdList.map(assetId => {
-        assetQueries.push(Promise.all([
-            getTotalSupply(assetId),
-            getTotalBorrows(assetId),
-            getTotalReserves(assetId),
-            getBorrowIndex(assetId),
-            getExchangeRate(assetId),
-            getBorrowRate(assetId),
-            getSupplyRate(assetId),
-            getUtilizationRatio(assetId)
-        ]))
-    })
-    const assetRes = await Promise.all(assetQueries)
-    for (let ind in assetRes) {
-        const assetId = assetIdList[ind]
-        const [
-            totalSupply,
-            totalBorrows,
-            totalReserves,
-            borrowIndex,
-            exchangeRate,
-            borrowRate,
-            supplyRate,
-            utilizationRatio
-        ] = assetRes[ind]
-        const record = LendingAssetConfigure.create({
-            id: `${blockHeight}-${assetId}`,
-            assetId,
-            blockHeight,
-            totalBorrows: totalBorrows,
-            totalSupply: totalSupply,
-            totalReserves: totalReserves,
-            exchangeRate: exchangeRate,
-            borrowRate: borrowRate,
-            supplyRate: supplyRate,
-            borrowIndex: borrowIndex,
-            utilizationRatio: utilizationRatio,
-            lastAccruedTimestamp,
-            timestamp
+    try {
+        if (assetIdList.length < 1) {
+            return
+        }
+        const lastAccruedTimestamp = await getLastAccruedTimestamp()
+        let assetQueries = []
+        assetIdList.map(assetId => {
+            assetQueries.push(Promise.all([
+                getTotalSupply(assetId),
+                getTotalBorrows(assetId),
+                getTotalReserves(assetId),
+                getBorrowIndex(assetId),
+                getExchangeRate(assetId),
+                getBorrowRate(assetId),
+                getSupplyRate(assetId),
+                getUtilizationRatio(assetId)
+            ]))
         })
-        logger.debug(`create new asset config: %o`, record)
-        record.save()
+        const assetRes = await Promise.all(assetQueries)
+        for (let ind in assetRes) {
+            const assetId = assetIdList[ind]
+            const [
+                totalSupply,
+                totalBorrows,
+                totalReserves,
+                borrowIndex,
+                exchangeRate,
+                borrowRate,
+                supplyRate,
+                utilizationRatio
+            ] = assetRes[ind]
+            const record = LendingAssetConfigure.create({
+                id: `${blockHeight}-${assetId}`,
+                assetId,
+                blockHeight,
+                totalBorrows: totalBorrows,
+                totalSupply: totalSupply,
+                totalReserves: totalReserves,
+                exchangeRate: exchangeRate,
+                borrowRate: borrowRate,
+                supplyRate: supplyRate,
+                borrowIndex: borrowIndex,
+                utilizationRatio: utilizationRatio,
+                lastAccruedTimestamp,
+                timestamp
+            })
+            logger.debug(`create new asset config: %o`, record)
+            record.save()
+        }
+    } catch (e: any) {
+        logger.error(`handle asset error: ${e.message}`)
     }
 }
 

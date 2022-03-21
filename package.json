@@ -19,7 +19,8 @@
   "author": "Bruce",
   "license": "MIT",
   "dependencies": {
-    "bignumber.js": "^9.0.2"
+    "bignumber.js": "^9.0.2",
+    "moment": "^2.29.1"
   },
   "devDependencies": {
     "@polkadot/api": "^7",
