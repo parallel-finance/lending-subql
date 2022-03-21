@@ -1,7 +1,7 @@
 import { SubstrateBlock, SubstrateEvent } from "@subql/types";
 import { LendingAction } from "../types";
 import { assetIdList, handleAssetConfig, handleMarketConfig, handlePosition } from './queryHandler'
-import { diffTime, endOf, hitBlockTime, hitEndOfDay, hitTime, startOf } from "./util";
+import { diffTime, hitBlockTime, hitEndOfDay, hitTime } from "./util";
 
 const BALANCE_CARE_EVNETS = [
     'Deposited',
@@ -25,8 +25,7 @@ export async function handleEvent(event: SubstrateEvent): Promise<void> {
             logger.info(`[${blockHeight}] handle [${method}] [${assetIdInt}] of ${addressStr} action hash: ${hash.toString()}`)
 
             const position = await handlePosition(assetIdInt, addressStr)
-
-            await LendingAction.create({
+            const record = LendingAction.create({
                 ...position,
                 id: hash.toString(),
                 blockHeight,
@@ -35,7 +34,9 @@ export async function handleEvent(event: SubstrateEvent): Promise<void> {
                 assetId: assetIdInt,
                 value: value && value.toString(),
                 timestamp
-            }).save()
+            })
+            logger.debug(`dump new action at[${blockHeight}] method[${method}]: ${timestamp}`)
+            await record.save()
         }
     } catch (e: any) {
         logger.error(`handle loans event error: %o`, e)
@@ -113,7 +114,8 @@ export async function handleBlock(block: SubstrateBlock): Promise<void> {
     }
     logger.debug(`start to handle block: ${timestamp}`)
     const ids = await assetIdList()
-
-    handleAssetConfig(ids, blockNumber, timestamp)
-    handleMarketConfig(ids, blockNumber, timestamp)
+    await Promise.all([
+        handleAssetConfig(ids, blockNumber, timestamp),
+        handleMarketConfig(ids, blockNumber, timestamp)
+    ])
 }

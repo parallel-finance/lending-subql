@@ -260,8 +260,8 @@ export async function handleAssetConfig(assetIdList: number[], blockHeight: numb
                 lastAccruedTimestamp,
                 timestamp
             })
-            logger.debug(`create new asset config: %o`, record)
-            record.save()
+            logger.debug(`dump new asset config at[${blockHeight}] assetId[${assetId}]: ${timestamp}`)
+            await record.save()
         }
     } catch (e: any) {
         logger.error(`handle asset error: ${e.message}`)
@@ -298,7 +298,8 @@ export async function handleMarketConfig(assetIdList: number[], blockHeight: num
                 marketStatus: state,
                 timestamp
             })
-            record.save()
+            logger.debug(`dump new market configure at[${blockHeight}] assetId[${assetId}]: ${timestamp}`)
+            await record.save()
         }
     } catch (e: any) {
         logger.error(`handle market error: ${e.message}`)
