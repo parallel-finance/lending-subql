@@ -8,7 +8,7 @@ type PositionData = {
     borrowBalance: string,
     borrowIndex: string
     supplyBalance: string,
-    totalEarnedPrior: number,
+    totalEarnedPrior: string,
     exchangeRatePrior: string,
     exchangeRate: string
 }
@@ -190,7 +190,7 @@ export async function handlePosition(assetId: number, address: string): Promise<
         borrowBalance,
         supplyBalance,
         borrowIndex,
-        totalEarnedPrior: totalEarned.totalEarnedPrior,
+        totalEarnedPrior: String(totalEarned.totalEarnedPrior),
         exchangeRatePrior: bigIntStr(totalEarned.exchangeRatePrior),
         exchangeRate
     }

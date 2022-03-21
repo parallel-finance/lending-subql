@@ -20,7 +20,7 @@ type LendingAction @entity {
 
   exchangeRate: String
 
-  totalEarnedPrior: Int
+  totalEarnedPrior: String
 
   exchangeRatePrior: String
 

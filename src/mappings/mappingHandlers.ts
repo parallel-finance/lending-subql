@@ -39,7 +39,7 @@ export async function handleEvent(event: SubstrateEvent): Promise<void> {
             await record.save()
         }
     } catch (e: any) {
-        logger.error(`handle loans event error: %o`, e)
+        logger.error(`handle loans event error: %o`, e.message)
     }
 }
 enum SnapshotPolicy {
