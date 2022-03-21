@@ -1,6 +1,4 @@
 
-/// assets.account  => address, assetId -> balance
-/// assets.asset => assetId -> supply(100->223642594977875000)
 import { BigNumber } from "bignumber.js"
 import { LendingAssetConfigure, LendingMarketConfigure } from "../types"
 
@@ -14,6 +12,9 @@ type PositionData = {
     exchangeRatePrior: string,
     exchangeRate: string
 }
+
+/// assets.account  => address, assetId -> balance
+/// assets.asset => assetId -> supply(100->223642594977875000)
 
 /// loans
 /// accountBorrows(assetId, address)
@@ -197,6 +198,21 @@ export async function handlePosition(assetId: number, address: string): Promise<
     return result
 }
 
+export async function assetIdList(): Promise<number[]> {
+    try {
+        const keys = await LQ.markets.keys()
+        return keys.map(k => {
+            let s: string = k.toHuman()[0]
+            if (s.includes(',')) {
+                s = s.replace(',', '')
+            }
+            return Number(s)
+        })
+    } catch (e: any) {
+        logger.error(`get asset id list error: %o`, e)
+    }
+}
+
 export async function handleAssetConfig(assetIdList: number[], blockHeight: number, timestamp: Date) {
     if (assetIdList.length < 1) {
         return
@@ -246,40 +262,6 @@ export async function handleAssetConfig(assetIdList: number[], blockHeight: numb
         logger.debug(`create new asset config: %o`, record)
         record.save()
     }
-    // const [
-    //     totalSupply,
-    //     totalBorrows,
-    //     totalReserves,
-    //     borrowIndex,
-    //     exchangeRate,
-    //     borrowRate,
-    //     supplyRate,
-    //     utilizationRatio
-    // ] = await Promise.all([
-    //     getTotalSupply(assetId),
-    //     getTotalBorrows(assetId),
-    //     getTotalReserves(assetId),
-    //     getBorrowIndex(assetId),
-    //     getExchangeRate(assetId),
-    //     getBorrowRate(assetId),
-    //     getSupplyRate(assetId),
-    //     getUtilizationRatio(assetId)
-    // ])
-}
-
-export async function assetIdList(): Promise<number[]> {
-    try {
-        const keys = await LQ.markets.keys()
-        return keys.map(k => {
-            let s: string = k.toHuman()[0]
-            if (s.includes(',')) {
-                s = s.replace(',', '')
-            }
-            return Number(s)
-        })
-    } catch (e: any) {
-        logger.error(`get asset id list error: %o`, e)
-    }
 }
 
 export async function handleMarketConfig(assetIdList: number[], blockHeight: number, timestamp: Date) {
@@ -317,31 +299,4 @@ export async function handleMarketConfig(assetIdList: number[], blockHeight: num
     } catch (e: any) {
         logger.error(`handle market error: ${e.message}`)
     }
-    // for (let assetId of assetIdList) {
-    //     const start = Date.now()
-    //     const re: any = await getLendingMarket(assetId)
-    //     const {
-    //         collateralFactor,
-    //         reserveFactor,
-    //         closeFactor,
-    //         liquidateIncentive,
-    //         cap,
-    //         state
-    //     } = re
-    //     logger.warn(`get market timeout: ${Date.now()-start}`)
-    //     const record = LendingMarketConfigure.create({
-    //         id: `${blockHeight}-${assetId}`,
-    //         blockHeight,
-    //         assetId,
-    //         collateralFactor,
-    //         reserveFactor,
-    //         closeFactor,
-    //         liquidationIncentive: bigIntStr(liquidateIncentive),
-    //         borrowCap: bigIntStr(cap),
-    //         marketStatus: state,
-    //         timestamp
-    //     })
-    //     logger.debug(`create new market config: %o`, record)
-    //     await record.save()
-    // }
 }

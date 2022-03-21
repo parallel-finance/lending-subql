@@ -41,12 +41,12 @@ export async function handleEvent(event: SubstrateEvent): Promise<void> {
     }
 }
 
+//
 export async function handleBlock(block: SubstrateBlock): Promise<void> {
 
     const blockNumber = block.block.header.number.toNumber()
     const timestamp = block.timestamp
 
-    // if (blockNumber % 6 !== 0) { return }
     const ids = await assetIdList()
 
     handleAssetConfig(ids, blockNumber, timestamp)
