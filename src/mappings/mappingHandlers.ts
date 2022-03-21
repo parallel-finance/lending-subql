@@ -60,7 +60,7 @@ function getPolicy(timestamp: Date): SnapshotPolicy {
         return SnapshotPolicy.Hour4
     }
     const diffHours = diffTime(timestamp, 'hours')
-    if (diffDays <= 7 && diffHours > 1) {
+    if (diffDays <= 7 && diffHours > 12) {
         // keep hourly snapshot
         return SnapshotPolicy.Hourly
     }
@@ -70,6 +70,7 @@ function getPolicy(timestamp: Date): SnapshotPolicy {
 
 function handlePolicy(timestamp: Date): boolean {
     try {
+        // day snapshot may be loss for block blocked over 12 seconds
         if (hitEndOfDay(timestamp)) return true
         const policy = getPolicy(timestamp)
         switch (policy) {
