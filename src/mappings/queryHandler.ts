@@ -1,6 +1,6 @@
 
 import { BigNumber } from "bignumber.js"
-import { LendingAssetConfigure, LendingMarketConfigure } from "../types"
+import { LendingAssetConfigure } from "../types"
 
 const LQ = api.query.loans
 
@@ -204,7 +204,7 @@ export async function assetIdList(): Promise<number[]> {
         return keys.map(k => {
             let s: string = k.toHuman()[0]
             if (s.includes(',')) {
-                s = s.replace(',', '')
+                s = s.replaceAll(',', '')
             }
             return Number(s)
         })
@@ -265,43 +265,5 @@ export async function handleAssetConfig(assetIdList: number[], blockHeight: numb
         }
     } catch (e: any) {
         logger.error(`handle asset error: ${e.message}`)
-    }
-}
-
-export async function handleMarketConfig(assetIdList: number[], blockHeight: number, timestamp: Date) {
-    try {
-        let marketQueries = []
-        assetIdList.map(assetId => {
-            marketQueries.push(getLendingMarket(assetId))
-        })
-        const marketRes = await Promise.all(marketQueries)
-        for (let ind in marketRes) {
-            const {
-                collateralFactor,
-                reserveFactor,
-                closeFactor,
-                liquidateIncentive,
-                cap,
-                state
-            } = marketRes[ind]
-            const assetId = assetIdList[ind]
-
-            const record = LendingMarketConfigure.create({
-                id: `${blockHeight}-${assetId}`,
-                blockHeight,
-                assetId,
-                collateralFactor,
-                reserveFactor,
-                closeFactor,
-                liquidationIncentive: bigIntStr(liquidateIncentive),
-                borrowCap: bigIntStr(cap),
-                marketStatus: state,
-                timestamp
-            })
-            logger.debug(`dump new market configure at[${blockHeight}] assetId[${assetId}]: ${timestamp}`)
-            await record.save()
-        }
-    } catch (e: any) {
-        logger.error(`handle market error: ${e.message}`)
     }
 }
