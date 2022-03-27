@@ -76,3 +76,57 @@ type LendingAssetConfigure @entity {
 
   timestamp: Date
 }
+
+type LiquidatedEvent @entity  {
+  id: ID!
+
+  blockHeight: Int! @index
+
+  liquidator: String!
+
+  borrower: String! @index
+
+  liquidateAssetId: Int!
+
+  collateralAssetId: Int!
+
+  repayAmount: String!
+
+  collateralAmount: String!
+
+  timestamp: Date!
+}
+
+type ReserveAction @entity {
+  id: ID!
+
+  blockHeight: Int! @index
+
+  admin: String!
+
+  assetId: Int!
+
+  action: String!
+
+  amount: String!
+
+  totalReserves: String!
+
+  timestamp: Date!
+}
+
+type MarketAction @entity {
+  id: ID!
+
+  blockHeight: Int! @index
+
+  action: String!
+
+  admin: String!
+
+  assetId: Int!
+
+  marketConfig: LendingMarketConfigure!
+
+  timestamp: Date!
+}
