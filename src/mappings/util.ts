@@ -34,7 +34,7 @@ function diffTime(timestamp: Date, unit: TimeUnit = 'days'): number {
     return now().diff(utcTime(timestamp), unit)
 }
 
-function startOf(timestamp: Date, unit: TimeUnit = 'days') {
+export function startOf(timestamp: Date, unit: TimeUnit = 'days') {
     return utcTime(timestamp).startOf(unit)
 }
 

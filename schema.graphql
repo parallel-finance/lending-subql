@@ -1,3 +1,14 @@
+type JumpRate @jsonField {
+  baseRate: String
+  jumpRate: String
+  fullRate: String
+  jumpUtilization: String
+}
+
+type RateModel @jsonField {
+  Jump: JumpRate
+}
+
 type LendingAction @entity {
 
   id: ID! #id is a required field
@@ -24,6 +35,8 @@ type MarketMeta @entity {
 
   collateralFactor: String
 
+  supplyCap: String
+
   borrowCap: String
 
   closeFactor: String
@@ -33,6 +46,12 @@ type MarketMeta @entity {
   liquidationIncentive: String
 
   reserveFactor: String
+
+  rateModel: RateModel
+
+  state: String
+
+  pTokenId: Int
 
   timestamp: Date
 }
@@ -86,7 +105,7 @@ type LiquidatedEvent @entity  {
 
   collateralAmount: String!
 
-  position: Position!
+  positions: [Position]!
 
   timestamp: Date!
 }

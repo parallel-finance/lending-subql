@@ -1,6 +1,8 @@
 import { GenericEventData } from "@polkadot/types"
 import { SubstrateEvent } from "@subql/types"
-import { LendingAction } from "../types"
+import { LendingAction, LiquidatedEvent, MarketAction, MarketMeta, Position } from "../types"
+import { bigIntStr, getMarketMetadata, handlePosition } from "./queryHandler"
+import { startOf } from "./util"
 
 interface Transfer {
     sender: string,
@@ -79,25 +81,108 @@ export function getEvtType(method: string): MmEvent {
     }
 }
 
+async function handleTransfer(data: GenericEventData, method: string, hash: string, blockHeight: number, timestamp: Date) {
+    try {
+        let [sender, asset, amount] = data
+        const address = sender.toString()
+        const assetId = Number(asset.toString())
+
+        const positionId = await handlePosition(assetId, address, blockHeight, timestamp)
+        await LendingAction.create({
+            id: hash,
+            address: sender.toString(),
+            positionId,
+            method,
+            assetId,
+            value: amount.toString(),
+            blockHeight,
+            timestamp
+        }).save()
+    } catch (e: any) {
+        logger.error(`handle transfer event error: ${e.message}`)
+    }
+}
+
 export async function eventHandler(event: SubstrateEvent) {
     try {
         let { event: { data, method } } = event
         const ext = event.extrinsic
-        const hash = ext.extrinsic.hash
+        const hash = ext.extrinsic.hash.toString()
         const blockHeight = ext.block.block.header.number.toNumber()
         const timestamp = ext.block.timestamp
+        const day = startOf(timestamp).valueOf()
         const evt = getEvtType(method)
         switch (evt) {
             case MmEvent.Transfer:
-                let [sender, assetId, amount] = data
-                LendingAction.create({
-                    id: '',
-                    address: sender.toString()
-                })
+                await handleTransfer(data, method, hash, blockHeight, timestamp)
                 break
             case MmEvent.Liquidate:
+                const [
+                    liquidator,
+                    borrower,
+                    liquidateAsset,
+                    collateralAsset,
+                    repayAmount,
+                    collateralAmount
+                ] = data
+                const liquidateAssetId = Number(liquidateAsset.toString())
+                const collateralAssetId = Number(collateralAsset.toString())
+                const address = borrower.toString()
+                const [pid1, pid2] = await Promise.all([
+                    handlePosition(liquidateAssetId, address, blockHeight, timestamp),
+                    handlePosition(collateralAssetId, address, blockHeight, timestamp)
+                ])
+                await LiquidatedEvent.create({
+                    id: hash,
+                    blockHeight,
+                    liquidator: liquidator.toString(),
+                    borrower: borrower.toString(),
+                    liquidateAssetId,
+                    collateralAssetId,
+                    repayAmount: repayAmount.toString(),
+                    collateralAmount: collateralAmount.toString(),
+                    positionsId: [pid1, pid2],
+                    timestamp
+                }).save()
                 break
             case MmEvent.Market:
+                const [sender, asset] = data
+                const admin = sender.toString()
+                const assetId = asset.toString()
+                const {
+                    collateralFactor,
+                    reserveFactor,
+                    closeFactor,
+                    liquidateIncentive,
+                    rateModel,
+                    state,
+                    borrowCap,
+                    supplyCap,
+                    ptokenId,
+                    cap
+                } = await getMarketMetadata(Number(assetId)) as any
+                await MarketMeta.create({
+                    id: assetId,
+                    blockHeight,
+                    collateralFactor: bigIntStr(collateralFactor),
+                    reserveFactor: bigIntStr(reserveFactor),
+                    closeFactor: bigIntStr(closeFactor),
+                    liquidationIncentive: bigIntStr(liquidateIncentive),
+                    rateModel: rateModel.toJSON(),
+                    state: state.toString(),
+                    supplyCap:  supplyCap ? bigIntStr(supplyCap) : bigIntStr(cap),
+                    borrowCap: borrowCap ? bigIntStr(borrowCap) : '0',
+                    pTokenId: Number(ptokenId.toString()),
+                    timestamp
+                }).save()
+                MarketAction.create({
+                    id: hash,
+                    blockHeight,
+                    action: method,
+                    admin,
+                    marketId: assetId,
+                    timestamp
+                }).save()
                 break
             case MmEvent.Reserve:
                 break

@@ -1,6 +1,7 @@
 
 import { BigNumber } from "bignumber.js"
-import { LendingAssetConfigure } from "../types"
+import { MarketSnapshot, Position } from "../types"
+import { startOf } from "./util"
 
 const LQ = api.query.loans
 
@@ -85,7 +86,7 @@ async function getAccountEarned(assetId: number, address: string) {
   ptokenId: 2,100
 }
  */
-async function getLendingMarket(assetId: number) {
+export async function getMarketMetadata(assetId: number) {
     return (await LQ.markets(assetId)).toJSON()
 }
 
@@ -105,7 +106,7 @@ async function getLendingMarket(assetId: number) {
 /** 0.00% */
 
 
-function bigIntStr(hex: string): string {
+export function bigIntStr(hex: string): string {
     return BigInt(hex).toString(10)
 }
 
@@ -160,7 +161,7 @@ async function getUtilizationRatio(assetId: number) {
     return bigIntStr((await LQ.utilizationRatio(assetId)).toString())
 }
 
-export async function handlePosition(assetId: number, address: string): Promise<PositionData> {
+export async function handlePosition(assetId: number, address: string, blockHeight: number, timestamp: Date): Promise<string> {
     const re: any = await Promise.all([
         getAccountBorrows(assetId, address),
         getBorrowIndex(assetId),
@@ -186,16 +187,24 @@ export async function handlePosition(assetId: number, address: string): Promise<
     }
 
     let supplyBalance = bigIntStr(supplys.voucherBalance.toString())
-    const result = {
+    const day = startOf(timestamp).valueOf()
+    const positionId = `${address}-${assetId}-${day}`
+    await Position.create({
+        id: positionId,
+        blockHeight,
+        address,
+        assetId,
         borrowBalance,
         supplyBalance,
         borrowIndex,
         totalEarnedPrior: String(totalEarned.totalEarnedPrior),
         exchangeRatePrior: bigIntStr(totalEarned.exchangeRatePrior),
-        exchangeRate
-    }
-    logger.info(`position result: \nraw: %o\nparsed: %o`, re, result)
-    return result
+        exchangeRate,
+        timestamp
+    }).save()
+
+    logger.info(`new position record: ${positionId}`)
+    return positionId
 }
 
 export async function assetIdList(): Promise<number[]> {
@@ -245,7 +254,7 @@ export async function handleAssetConfig(assetIdList: number[], blockHeight: numb
                 supplyRate,
                 utilizationRatio
             ] = assetRes[ind]
-            const record = LendingAssetConfigure.create({
+            const record = MarketSnapshot.create({
                 id: `${blockHeight}-${assetId}`,
                 assetId,
                 blockHeight,
@@ -255,6 +264,8 @@ export async function handleAssetConfig(assetIdList: number[], blockHeight: numb
                 exchangeRate: exchangeRate,
                 borrowRate: borrowRate,
                 supplyRate: supplyRate,
+                numberOfBorrow: 0,  // todo
+                numberOfSupply: 0,
                 borrowIndex: borrowIndex,
                 utilizationRatio: utilizationRatio,
                 lastAccruedTimestamp,
