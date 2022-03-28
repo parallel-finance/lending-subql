@@ -161,6 +161,26 @@ async function getUtilizationRatio(assetId: number) {
     return bigIntStr((await LQ.utilizationRatio(assetId)).toString())
 }
 
+function keyLength(assetId: number, keys: any[]): number {
+    return keys.filter((k: any) => {
+        let id = k.toHuman()[0].replace(/\,/g, '')
+        if (Number(id) === assetId) {
+            return true
+        }
+        return false
+    }).length
+}
+
+async function getBorrowerCounts(assetId: number) {
+    const keys = await LQ.accountBorrows.keys()
+    return keyLength(assetId, keys)
+}
+
+async function getSupplierCounts(assetId: number) {
+    const keys = await LQ.accountDeposits.keys()
+    return keyLength(assetId, keys)
+}
+
 export async function handlePosition(assetId: number, address: string, blockHeight: number, timestamp: Date): Promise<string> {
     const re: any = await Promise.all([
         getAccountBorrows(assetId, address),
@@ -222,13 +242,14 @@ export async function assetIdList(): Promise<number[]> {
     }
 }
 
-export async function handleAssetConfig(assetIdList: number[], blockHeight: number, timestamp: Date) {
+export async function handleMarketSnapshot(assetIdList: number[], blockHeight: number, timestamp: Date) {
     try {
         if (assetIdList.length < 1) {
             return
         }
         const lastAccruedTimestamp = await getLastAccruedTimestamp()
         let assetQueries = []
+
         assetIdList.map(assetId => {
             assetQueries.push(Promise.all([
                 getTotalSupply(assetId),
@@ -238,7 +259,9 @@ export async function handleAssetConfig(assetIdList: number[], blockHeight: numb
                 getExchangeRate(assetId),
                 getBorrowRate(assetId),
                 getSupplyRate(assetId),
-                getUtilizationRatio(assetId)
+                getUtilizationRatio(assetId),
+                getBorrowerCounts(assetId),
+                getSupplierCounts(assetId)
             ]))
         })
         const assetRes = await Promise.all(assetQueries)
@@ -252,7 +275,9 @@ export async function handleAssetConfig(assetIdList: number[], blockHeight: numb
                 exchangeRate,
                 borrowRate,
                 supplyRate,
-                utilizationRatio
+                utilizationRatio,
+                numberOfBorrow,
+                numberOfSupply
             ] = assetRes[ind]
             const record = MarketSnapshot.create({
                 id: `${blockHeight}-${assetId}`,
@@ -264,8 +289,8 @@ export async function handleAssetConfig(assetIdList: number[], blockHeight: numb
                 exchangeRate: exchangeRate,
                 borrowRate: borrowRate,
                 supplyRate: supplyRate,
-                numberOfBorrow: 0,  // todo
-                numberOfSupply: 0,
+                numberOfBorrow,
+                numberOfSupply,
                 borrowIndex: borrowIndex,
                 utilizationRatio: utilizationRatio,
                 lastAccruedTimestamp,

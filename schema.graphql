@@ -6,7 +6,7 @@ type JumpRate @jsonField {
 }
 
 type RateModel @jsonField {
-  Jump: JumpRate
+  jump: JumpRate
 }
 
 type LendingAction @entity {
@@ -104,8 +104,6 @@ type LiquidatedEvent @entity  {
   repayAmount: String!
 
   collateralAmount: String!
-
-  positions: [Position]!
 
   timestamp: Date!
 }

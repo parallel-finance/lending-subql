@@ -55,6 +55,7 @@ export enum MmEvent {
     Liquidate,
     Reserve,
     Market,
+    Ignore,
     Unknow
 }
 
@@ -74,6 +75,10 @@ export function getEvtType(method: string): MmEvent {
         case 'ReservesAdded':
         case 'ReservesReduced':
             return MmEvent.Reserve
+        case 'CollateralAssetAdded':
+        case 'CollateralAssetRemoved':
+            logger.debug(`ignore event: ${method}`)
+            return MmEvent.Ignore
         default:
             logger.warn(`unknow method to handle: ${method}`)
             return MmEvent.Unknow
@@ -103,9 +108,57 @@ async function handleTransfer(data: GenericEventData, method: string, hash: stri
     }
 }
 
+export async function handleMarketMeta(assetId: number, blockHeight: number, timestamp: Date) {
+    try {
+        const re = await getMarketMetadata(assetId)
+        const {
+            collateralFactor,
+            reserveFactor,
+            closeFactor,
+            liquidateIncentive,
+            rateModel,
+            state,
+            borrowCap,
+            supplyCap,
+            ptokenId,
+            cap
+        } = re as any
+        const jump = rateModel.jump
+        logger.debug(`market meta: %o`, re)
+        const record = MarketMeta.create({
+            id: assetId.toString(),
+            blockHeight,
+            collateralFactor: bigIntStr(collateralFactor),
+            reserveFactor: bigIntStr(reserveFactor),
+            closeFactor: bigIntStr(closeFactor),
+            liquidationIncentive: bigIntStr(liquidateIncentive),
+            rateModel: {
+                ...rateModel,
+                "jump": {
+                    ...jump,
+                    baseRate: bigIntStr(jump.baseRate),
+                    jumpRate: bigIntStr(jump.jumpRate),
+                    fullRate: bigIntStr(jump.fullRate)
+                },
+
+            },
+            state: state.toString(),
+            supplyCap: supplyCap ? bigIntStr(supplyCap) : bigIntStr(cap),
+            borrowCap: borrowCap ? bigIntStr(borrowCap) : '0',
+            pTokenId: Number(ptokenId.toString()),
+            timestamp
+        })
+        logger.debug(`market meta record: %o`, record)
+        await record.save()
+    } catch (e: any) {
+        logger.error(`handle matke metadata error: ${e.message}`)
+    }
+}
+
 export async function eventHandler(event: SubstrateEvent) {
     try {
         let { event: { data, method } } = event
+        logger.debug(`new event ${method}`)
         const ext = event.extrinsic
         const hash = ext.extrinsic.hash.toString()
         const blockHeight = ext.block.block.header.number.toNumber()
@@ -128,7 +181,8 @@ export async function eventHandler(event: SubstrateEvent) {
                 const liquidateAssetId = Number(liquidateAsset.toString())
                 const collateralAssetId = Number(collateralAsset.toString())
                 const address = borrower.toString()
-                const [pid1, pid2] = await Promise.all([
+                // just update position 
+                await Promise.all([
                     handlePosition(liquidateAssetId, address, blockHeight, timestamp),
                     handlePosition(collateralAssetId, address, blockHeight, timestamp)
                 ])
@@ -141,7 +195,6 @@ export async function eventHandler(event: SubstrateEvent) {
                     collateralAssetId,
                     repayAmount: repayAmount.toString(),
                     collateralAmount: collateralAmount.toString(),
-                    positionsId: [pid1, pid2],
                     timestamp
                 }).save()
                 break
@@ -149,33 +202,8 @@ export async function eventHandler(event: SubstrateEvent) {
                 const [sender, asset] = data
                 const admin = sender.toString()
                 const assetId = asset.toString()
-                const {
-                    collateralFactor,
-                    reserveFactor,
-                    closeFactor,
-                    liquidateIncentive,
-                    rateModel,
-                    state,
-                    borrowCap,
-                    supplyCap,
-                    ptokenId,
-                    cap
-                } = await getMarketMetadata(Number(assetId)) as any
-                await MarketMeta.create({
-                    id: assetId,
-                    blockHeight,
-                    collateralFactor: bigIntStr(collateralFactor),
-                    reserveFactor: bigIntStr(reserveFactor),
-                    closeFactor: bigIntStr(closeFactor),
-                    liquidationIncentive: bigIntStr(liquidateIncentive),
-                    rateModel: rateModel.toJSON(),
-                    state: state.toString(),
-                    supplyCap:  supplyCap ? bigIntStr(supplyCap) : bigIntStr(cap),
-                    borrowCap: borrowCap ? bigIntStr(borrowCap) : '0',
-                    pTokenId: Number(ptokenId.toString()),
-                    timestamp
-                }).save()
-                MarketAction.create({
+                await handleMarketMeta(Number(assetId), blockHeight, timestamp)
+                await MarketAction.create({
                     id: hash,
                     blockHeight,
                     action: method,
