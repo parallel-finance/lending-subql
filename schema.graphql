@@ -12,27 +12,15 @@ type LendingAction @entity {
 
   value: String
 
-  supplyBalance: String
-
-  borrowBalance: String
-
-  borrowIndex: String
-
-  exchangeRate: String
-
-  totalEarnedPrior: String
-
-  exchangeRatePrior: String
+  position: Position!
 
   timestamp: Date
 }
 
-type LendingMarketConfigure @entity {
-  id: ID!
+type MarketMeta @entity {
+  id: ID! #market id(asset id)
 
   blockHeight: Int @index
-
-  assetId: Int @index
 
   collateralFactor: String
 
@@ -49,7 +37,7 @@ type LendingMarketConfigure @entity {
   timestamp: Date
 }
 
-type LendingAssetConfigure @entity {
+type MarketSnapshot @entity {
   id: ID!
 
   assetId: Int @index
@@ -67,6 +55,10 @@ type LendingAssetConfigure @entity {
   borrowRate: String
 
   supplyRate: String
+
+  numberOfBorrow: Int
+
+  numberOfSupply: Int
 
   exchangeRate: String
 
@@ -93,6 +85,8 @@ type LiquidatedEvent @entity  {
   repayAmount: String!
 
   collateralAmount: String!
+
+  position: Position!
 
   timestamp: Date!
 }
@@ -124,9 +118,31 @@ type MarketAction @entity {
 
   admin: String!
 
+  market: MarketMeta!
+
+  timestamp: Date!
+}
+
+type Position @entity {
+  id: ID! # address-assetId-daytime
+
+  blockHeight: Int! @index
+
+  address: String!
+
   assetId: Int!
 
-  marketConfig: LendingMarketConfigure!
+  supplyBalance: String!
+
+  borrowBalance: String!
+
+  exchangeRate: String!
+
+  borrowIndex: String
+
+  totalEarnedPrior: String
+
+  exchangeRatePrior: String
 
   timestamp: Date!
 }
