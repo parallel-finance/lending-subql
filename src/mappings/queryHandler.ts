@@ -3,8 +3,6 @@ import { BigNumber } from "bignumber.js"
 import { MarketSnapshot, Position } from "../types"
 import { startOf } from "./util"
 
-const LQ = api.query.loans
-
 type PositionData = {
     borrowBalance: string,
     borrowIndex: string
@@ -37,7 +35,7 @@ async function getAccountBorrows(assetId: number, address) {
 }
 */
 async function getAccountDeposits(assetId: number, address: string) {
-    return (await LQ.accountDeposits(assetId, address)).toJSON()
+    return (await api.query.loans.accountDeposits(assetId, address)).toJSON()
 }
 
 /// accountEarned(u32, AccountId32): PalletLoansEarnedSnapshot
@@ -49,7 +47,7 @@ async function getAccountDeposits(assetId: number, address: string) {
 */
 
 async function getAccountEarned(assetId: number, address: string) {
-    return (await LQ.accountEarned(assetId, address)).toJSON()
+    return (await api.query.loans.accountEarned(assetId, address)).toJSON()
 }
 
 /// borrowIndex(u32): u128
@@ -87,7 +85,7 @@ async function getAccountEarned(assetId: number, address: string) {
 }
  */
 export async function getMarketMetadata(assetId: number) {
-    return (await LQ.markets(assetId)).toJSON()
+    return (await api.query.loans.markets(assetId)).toJSON()
 }
 
 /// supplyRate(u32): u128
@@ -138,27 +136,27 @@ async function getTotalSupply(assetId: number) {
 }
 
 async function getTotalBorrows(assetId: number) {
-    return bigIntStr((await LQ.totalBorrows(assetId)).toString())
+    return bigIntStr((await api.query.loans.totalBorrows(assetId)).toString())
 }
 
 async function getTotalReserves(assetId: number) {
-    return bigIntStr((await LQ.totalReserves(assetId)).toString())
+    return bigIntStr((await api.query.loans.totalReserves(assetId)).toString())
 }
 
 async function getBorrowIndex(assetId: number) {
-    return bigIntStr((await LQ.borrowIndex(assetId)).toString())
+    return bigIntStr((await api.query.loans.borrowIndex(assetId)).toString())
 }
 
 async function getBorrowRate(assetId: number) {
-    return bigIntStr((await LQ.borrowRate(assetId)).toString())
+    return bigIntStr((await api.query.loans.borrowRate(assetId)).toString())
 }
 
 async function getSupplyRate(assetId: number) {
-    return bigIntStr((await LQ.supplyRate(assetId)).toString())
+    return bigIntStr((await api.query.loans.supplyRate(assetId)).toString())
 }
 
 async function getUtilizationRatio(assetId: number) {
-    return bigIntStr((await LQ.utilizationRatio(assetId)).toString())
+    return bigIntStr((await api.query.loans.utilizationRatio(assetId)).toString())
 }
 
 function keyLength(assetId: number, keys: any[]): number {
@@ -172,12 +170,12 @@ function keyLength(assetId: number, keys: any[]): number {
 }
 
 async function getBorrowerCounts(assetId: number) {
-    const keys = await LQ.accountBorrows.keys()
+    const keys = await api.query.loans.accountBorrows.keys()
     return keyLength(assetId, keys)
 }
 
 async function getSupplierCounts(assetId: number) {
-    const keys = await LQ.accountDeposits.keys()
+    const keys = await api.query.loans.accountDeposits.keys()
     return keyLength(assetId, keys)
 }
 
@@ -229,7 +227,7 @@ export async function handlePosition(assetId: number, address: string, blockHeig
 
 export async function assetIdList(): Promise<number[]> {
     try {
-        const keys = await LQ.markets.keys()
+        const keys = await api.query.loans.markets.keys()
         return keys.map(k => {
             let s: string = k.toHuman()[0]
             if (s.includes(',')) {
